@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disaster Medical Kit Challenge</title>
+    
+    <!-- Embedded CSS from style.css -->
+    <style>
+        :root {
+            --color-primary: #3f51b5; /* Indigo Blue */
+            --color-secondary: #ff9800; /* Orange */
+            --color-background: #f4f4f9; /* Light Gray Background */
+            --color-dropzone: #e0f2f1; /* Light Teal */
+            --color-correct: #4caf50; /* Green */
+            --color-incorrect: #f44336; /* Red */
+            --color-general: #9e9e9e; /* Gray for General Items */
+            --color-text-dark: #333;
+            --color-text-light: #fff;
+        }
+
+        * {
+            box-sizing: border-box; 
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text-dark);
+            padding: 20px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        h1 {
+            color: var(--color-primary);
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+
+        h2 {
+            color: var(--color-primary);
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        #disaster-prompt {
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+        }
+
+        #scenario-text {
+            color: var(--color-secondary);
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        #disaster-prompt p {
+            font-size: 1.1em;
+            color: #555;
+            margin-top: 10px;
+        }
+
+        /* --- Game Container Layout (Main areas side-by-side or stacked) --- */
+        #game-container {
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            max-width: 1200px; 
+            margin: 30px auto;
+            gap: 30px; 
+        }
+
+        /* --- Medical Box (The Drop Target) --- */
+        #medical-box {
+            width: 90%; 
+            max-width: 600px; 
+            min-height: 250px; 
+            background-color: var(--color-dropzone);
+            border: 3px dashed var(--color-primary);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap; 
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--color-primary);
+            transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        #medical-box p {
+            font-size: 0.8em;
+            color: #00796b;
+            width: 100%; 
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        #medical-box.hover {
+            background-color: #c8e6c9; 
+            border-color: var(--color-correct);
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.5); 
+        }
+
+
+        /* --- Equipment Area (Where the items start) --- */
+        #equipment-area {
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            align-items: flex-start; 
+            width: 95%; 
+            max-width: 1000px; 
+            padding: 25px;
+            gap: 20px; 
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        /* --- Individual Equipment Items --- */
+        .equipment-item {
+            width: 120px; 
+            height: 140px; 
+            
+            padding: 10px;
+            background-color: #f0f0f0; 
+            border: 2px solid var(--color-general); 
+            border-radius: 10px;
+            text-align: center;
+            cursor: grab; 
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+            user-select: none; 
+            
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .equipment-item:hover {
+            transform: translateY(-5px) scale(1.03); 
+            box-shadow: 0 8px 20px rgba(var(--color-primary), 0.2);
+            border-color: var(--color-primary);
+        }
+
+        .equipment-item img {
+            width: 70px; 
+            height: 70px;
+            object-fit: contain; 
+            margin-bottom: 8px; 
+            pointer-events: none; 
+        }
+
+        .equipment-item span {
+            font-size: 0.9em; 
+            font-weight: bold;
+            color: var(--color-text-dark);
+            line-height: 1.2;
+            pointer-events: none; 
+        }
+
+        /* --- Visual Feedback for Dropped Items --- */
+
+        .equipment-item.dropped {
+            cursor: default;
+            border-style: solid; 
+            margin: 10px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+        }
+
+        /* Correctly placed items */
+        .equipment-item.correct {
+            background-color: #e8f5e9; 
+            border-color: var(--color-correct); 
+        }
+
+        /* Incorrectly placed items */
+        .equipment-item.incorrect {
+            background-color: #ffebee; 
+            border-color: var(--color-incorrect); 
+        }
+
+        /* Item currently being dragged */
+        .equipment-item.dragging {
+            opacity: 0.6; 
+            transform: scale(1.05);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4);
+            z-index: 1000; 
+        }
+
+        /* --- Message and Score Display --- */
+
+        #message {
+            margin-top: 25px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--color-primary);
+        }
+
+        #score-display {
+            font-size: 1.3em;
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            border: 2px solid var(--color-primary);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #score-display p {
+            margin: 8px 0;
+            color: var(--color-text-dark);
+        }
+
+        #score-display p b {
+            color: var(--color-secondary);
+        }
+
+        /* --- Button Styles --- */
+
+        #next-button {
+            padding: 12px 25px;
+            margin-top: 30px;
+            font-size: 1.3em;
+            background-color: var(--color-secondary);
+            color: var(--color-text-light);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #next-button:hover {
+            background-color: #e65100; /* Darker Orange */
+            transform: translateY(-2px);
+        }
+
+        #next-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- Animation for Incorrect Drops --- */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+
+        .equipment-item.incorrect {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        /* --- Responsive Design --- */
+        @media (min-width: 768px) {
+            #game-container {
+                flex-direction: row; 
+                justify-content: space-around;
+                align-items: flex-start; 
+            }
+
+            #medical-box {
+                width: 40%;
+                min-height: 400px; 
+                margin-bottom: 0; 
+            }
+
+            #equipment-area {
+                width: 55%;
+                min-height: 400px; 
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Disaster Medical Kit Challenge</h1>
+
+    <div id="disaster-prompt">
+        <h2>Disaster Scenario: <span id="scenario-text">Earthquake (Potential injuries, trauma)</span></h2>
+        <p>Drag **only** the essential medical equipment to the center Medical Box.</p>
+    </div>
+
+    <div id="game-container">
+        <div id="medical-box" class="drop-target">
+            Medical Box (First Aid Kit)
+            <p>Drop essential items here</p>
+        </div>
+
+        <div id="equipment-area">
+            <div class="equipment-item" draggable="true" data-disaster="general" data-name="Bandages">
+                <img src="https://th.bing.com/th/id/OIP.ERvYzGLq4Io3SwYAo81XBwHaHa?w=191&h=191&c=7&r=0&o=7&cb=12&dpr=1.3&pid=1.7&rm=3" alt="Bandages">
+                <span>Bandages</span>
+            </div>
+            
+            <div class="equipment-item" draggable="true" data-disaster="flood" data-name="Water Purification Tablets">
+                <img src="https://th.bing.com/th/id/OIP.ovmuqs27JzCT2FrOwnKKewHaHa?w=194&h=193&c=7&r=0&o=7&cb=12&dpr=1.3&pid=1.7&rm=3" alt="Water Purifiers">
+                <span>Water Purification Tablets</span>
+            </div>
+            
+            <div class="equipment-item" draggable="true" data-disaster="earthquake" data-name="Splints">
+                <img src="https://th.bing.com/th/id/OIP.z8VguyAw20-gKoUzIJ36CQHaHa?w=89&h=89&c=1&rs=1&qlt=70&r=0&o=7&cb=12&dpr=1.3&pid=InlineBlock&rm=3" alt="Splints">
+                <span>Splints</span>
+            </div>
+            
+            <div class="equipment-item" draggable="true" data-disaster="general" data-name="Pain Relievers">
+                <img src="https://th.bing.com/th/id/OIP.-cX6snbL5TCcQsq3gAi6_AHaHa?w=187&h=187&c=7&r=0&o=7&cb=12&dpr=1.3&pid=1.7&rm=3" alt="Pain Relievers">
+                <span>Pain Relievers</span>
+            </div>
+            
+            <div class="equipment-item" draggable="true" data-disaster="fire" data-name="Burn Cream">
+                <img src="https://th.bing.com/th/id/OIP.T_-QTmBY0LiLsN2tEcNEqAHaF6?w=208&h=180&c=7&r=0&o=7&cb=12&dpr=1.3&pid=1.7&rm=3" alt="Burn Cream">
+                <span>Burn Cream</span>
+            </div>
+            
+            <div class="equipment-item" draggable="true" data-disaster="earthquake" data-name="Tourniquet">
+                <img src="https://th.bing.com/th/id/OIP._rded4T2qIjnrYc3vIsaYgHaHa?w=198&h=198&c=7&r=0&o=7&cb=12&dpr=1.3&pid=1.7&rm=3" alt="Tourniquet">
+                <span>Tourniquet</span>
+            </div>
+            
+            <div class="equipment-item" draggable="true" data-disaster="general" data-name="Emergency Whistle">
+                <img src="https://th.bing.com/th/id/OIP.Pul_v-_Ff0P86FfeyN8k8wHaEV?w=290&h=180&c=7&r=0&o=7&cb=12&dpr=1.3&pid=1.7&rm=3" alt="Whistle">
+                <span>Emergency Whistle</span>
+            </div>
+            
+            <div class="equipment-item" draggable="true" data-disaster="general" data-name="Antiseptic Wipes">
+                <img src="https://th.bing.com/th/id/OIP.fzBQ4qx3tYnogNJ0boVIuAHaHa?w=208&h=209&c=7&r=0&o=7&cb=12&dpr=1.3&pid=1.7&rm=3" alt="Antiseptic Wipes">
+                <span>Antiseptic Wipes</span>
+            </div>
+            
+            <div class="equipment-item" draggable="true" data-disaster="general" data-name="Trauma Shears">
+                <img src="https://th.bing.com/th/id/OIP.s3HoTlj9HPJQADb0f0WtFwHaHa?w=192&h=192&c=7&r=0&o=7&cb=12&dpr=1.3&pid=1.7&rm=3" alt="Trauma Shears">
+                <span>Trauma Shears</span>
+            </div>
+            
+            <div class="equipment-item" draggable="true" data-disaster="chemical" data-name="N95 Mask">
+                <img src="https://th.bing.com/th/id/OIP.rHFeOP0edkffyxjiO4FI4QHaHa?w=184&h=184&c=7&r=0&o=7&cb=12&dpr=1.3&pid=1.7&rm=3" alt="N95 Mask">
+                <span>N95 Mask</span>
+            </div>
+            
+            <div class="equipment-item" draggable="true" data-disaster="general" data-name="Thermometer">
+                <img src="https://th.bing.com/th/id/OIP.l2t3tFJEiZrrsmruipsTZQHaE8?w=267&h=180&c=7&r=0&o=7&cb=12&dpr=1.3&pid=1.7&rm=3" alt="Thermometer">
+                <span>Thermometer</span>
+            </div>
+            
+            <div class="equipment-item" draggable="true" data-disaster="none" data-name="Fire Extinguisher">
+                <img src="https://th.bing.com/th/id/OIP.13_flDGp6ilmEkpdRLQPIgHaD6?w=344&h=181&c=7&r=0&o=7&cb=12&dpr=1.3&pid=1.7&rm=3" alt="Fire Extinguisher">
+                <span>Fire Extinguisher</span>
+            </div>
+            <div class="equipment-item" draggable="true" data-disaster="none" data-name="Fishing Gear">
+                <img src="https://th.bing.com/th/id/OIP.AE3WbPdKLUDJOy79A-PfewHaHc?w=162&h=180&c=7&r=0&o=7&cb=12&dpr=1.3&pid=1.7&rm=3" alt="Fishing Gear">
+                <span>Fishing Gear</span>
+            </div>
+            <div class="equipment-item" draggable="true" data-disaster="none" data-name="Board Game">
+                <img src="https://th.bing.com/th/id/OIP.FKucwxUyqRxatbP3ECQj1AHaET?w=308&h=180&c=7&r=0&o=7&cb=12&dpr=1.3&pid=1.7&rm=3" alt="Board Game">
+                <span>Board Game</span>
+            </div>
+        </div>
+    </div>
+
+    <p id="message"></p>
+    <div id="score-display"></div>
+    <button onclick="nextPlayer()" id="next-button" style="display:none;">End Turn / Next Player</button>
+
+    <!-- Embedded JavaScript from script.js -->
+    <script>
+        /* script.js - FINALIZED CODE FOR ALL SCENARIOS AND SCORING */
+
+        const medicalBox = document.getElementById('medical-box');
+        const equipmentItems = document.querySelectorAll('.equipment-item');
+        const message = document.getElementById('message');
+        const scenarioText = document.getElementById('scenario-text');
+        const nextButton = document.getElementById('next-button');
+        const scoreDisplay = document.getElementById('score-display');
+
+        // --- Game State Variables ---
+        let currentDisaster = 'earthquake'; 
+        let currentPlayerIndex = 0;
+        let playerScores = []; // Stores scores for each turn/player
+
+        // All 6 disaster scenarios and their descriptions
+        const disasters = [
+            { name: 'Earthquake (Trauma, bleeding, broken bones)', type: 'earthquake' },
+            { name: 'Flash Flood (Water contamination, hypothermia, drowning risk)', type: 'flood' },
+            { name: 'Wildfire (Burn injuries, smoke inhalation, evacuation)', type: 'fire' },
+            { name: 'Tornado (Structural collapse, debris injuries)', type: 'tornado' },
+            { name: 'Tsunami (Water survival, large-scale trauma)', type: 'tsunami' },
+            { name: 'Chemical Spill (Airborne toxins, exposure)', type: 'chemical' }
+        ];
+
+        // --- Scoring Constants ---
+        const POINTS_CORRECT = 10;
+        const POINTS_INCORRECT_PENALTY = -5;
+        const POINTS_MISSED_PENALTY = -3;
+
+        // --- Drag and Drop Functions ---
+
+        equipmentItems.forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                if (item.classList.contains('dropped')) {
+                    e.preventDefault();
+                    return;
+                }
+                e.dataTransfer.setData('text/disaster', item.dataset.disaster);
+                e.dataTransfer.setData('text/name', item.dataset.name);
+                e.currentTarget.classList.add('dragging');
+            });
+
+            item.addEventListener('dragend', (e) => {
+                e.currentTarget.classList.remove('dragging');
+            });
+        });
+
+        medicalBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        medicalBox.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            medicalBox.classList.add('hover');
+        });
+
+        medicalBox.addEventListener('dragleave', () => {
+            medicalBox.classList.remove('hover');
+        });
+
+        medicalBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            medicalBox.classList.remove('hover');
+
+            const itemDisaster = e.dataTransfer.getData('text/disaster');
+            const itemName = e.dataTransfer.getData('text/name'); 
+            
+            const draggedElement = document.querySelector(`.equipment-item[data-name="${itemName}"]:not(.dropped)`);
+
+            if (!draggedElement || draggedElement.classList.contains('dropped')) return; 
+
+            // An item is essential if it is a general item OR it matches the current disaster type.
+            const isEssential = itemDisaster === currentDisaster || itemDisaster === 'general';
+            const isIrrelevant = itemDisaster === 'none';
+
+            if (isEssential) {
+                message.textContent = `${itemName} is a CORRECT match for ${currentDisaster.toUpperCase()}! (+${POINTS_CORRECT} pts)`;
+                draggedElement.classList.add('correct', 'dropped', 'essential-correct');
+            } else if (isIrrelevant) {
+                message.textContent = `${itemName} is NOT a medical essential. Penalty! (${POINTS_INCORRECT_PENALTY} pts)`;
+                draggedElement.classList.add('incorrect', 'dropped', 'irrelevant-incorrect');
+            } else {
+                message.textContent = `${itemName} is NOT the top priority for ${currentDisaster.toUpperCase()}. Penalty! (${POINTS_INCORRECT_PENALTY} pts)`;
+                draggedElement.classList.add('incorrect', 'dropped', 'wrong-scenario-incorrect');
+            }
+            
+            draggedElement.draggable = false;
+            medicalBox.appendChild(draggedElement);
+            checkTurnEnd();
+        });
+
+
+        // --- Game Logic and Scoring Functions ---
+
+        /**
+         * Counts the total number of items considered "essential" for the current disaster scenario.
+         * Essential means it is tagged with 'general' or the specific disasterType.
+         */
+        function getEssentialItemsCount(disasterType) {
+            let count = 0;
+            equipmentItems.forEach(item => {
+                if (item.dataset.disaster === disasterType || item.dataset.disaster === 'general') {
+                    count++;
+                }
+            });
+            return count;
+        }
+
+        function checkTurnEnd() {
+            // Display the button to calculate the score and end the current scenario turn
+            nextButton.style.display = 'block';
+            nextButton.textContent = `End ${disasters[currentPlayerIndex].type} Turn and Show Score`;
+        }
+
+        function calculateScore() {
+            let score = 0;
+            
+            // Count correctly placed essential items
+            const droppedItems = medicalBox.querySelectorAll('.equipment-item');
+            let correctDropped = 0;
+            let incorrectDropped = 0;
+
+            droppedItems.forEach(item => {
+                const itemDisaster = item.dataset.disaster;
+                const isEssential = itemDisaster === currentDisaster || itemDisaster === 'general';
+                const isIrrelevant = itemDisaster === 'none';
+
+                if (isEssential) {
+                    correctDropped++;
+                } else if (!isIrrelevant) {
+                    // Item is essential for a *different* scenario (e.g., Burn Cream in Flood)
+                    incorrectDropped++;
+                } else {
+                    // Irrelevant item (e.g., Fishing Gear)
+                    incorrectDropped++;
+                }
+            });
+
+            // 1. Scoring correct items
+            score += correctDropped * POINTS_CORRECT;
+
+            // 2. Scoring incorrect items (wrong scenario specific or non-medical)
+            score += incorrectDropped * POINTS_INCORRECT_PENALTY;
+
+            // 3. Scoring missed essential items
+            const totalEssentials = getEssentialItemsCount(currentDisaster);
+            const missedEssentials = totalEssentials - correctDropped;
+            
+            score += missedEssentials * POINTS_MISSED_PENALTY;
+
+            // Save the results for this turn
+            playerScores[currentPlayerIndex] = {
+                disaster: disasters[currentPlayerIndex].type,
+                score: score,
+                correct: correctDropped,
+                incorrect: incorrectDropped,
+                missed: missedEssentials
+            };
+
+            displayScore(score);
+            
+            nextButton.textContent = (currentPlayerIndex < disasters.length - 1) ? "Next Disaster Scenario" : "View Final Results";
+        }
+
+        function displayScore(score) {
+            const currentScoreData = playerScores[currentPlayerIndex];
+            scoreDisplay.innerHTML = `
+                <p>🚨 **${currentScoreData.disaster.toUpperCase()} SCORE:** ${score} points 🚨</p>
+                <p>✅ Correct Items Selected: ${currentScoreData.correct} (+${currentScoreData.correct * POINTS_CORRECT} pts)</p>
+                <p>❌ Wrong/Non-Essential Items Added: ${currentScoreData.incorrect} (${currentScoreData.incorrect * POINTS_INCORRECT_PENALTY} pts)</p>
+                <p>⚠️ Essential Items Missed: ${currentScoreData.missed} (${currentScoreData.missed * POINTS_MISSED_PENALTY} pts)</p>
+            `;
+        }
+
+        function nextPlayer() {
+            // First click: Calculate score and show results for the current scenario
+            if (!playerScores[currentPlayerIndex] || !scoreDisplay.innerHTML.includes('SCORE:')) {
+                calculateScore();
+                return;
+            }
+
+            // Second click: Move to the next scenario or finish the game
+            currentPlayerIndex++;
+
+            if (currentPlayerIndex < disasters.length) {
+                // Move to the next scenario
+                currentDisaster = disasters[currentPlayerIndex].type;
+                scenarioText.textContent = disasters[currentPlayerIndex].name;
+                message.textContent = `Scenario ${currentPlayerIndex + 1}. Drag items for: ${disasters[currentPlayerIndex].type.toUpperCase()}!`;
+                scoreDisplay.innerHTML = '';
+                
+                resetEquipment();
+            } else {
+                // Game Over - Display final results
+                displayFinalResults();
+            }
+        }
+
+        function displayFinalResults() {
+            let finalHTML = "<h2>FINAL GAME RESULTS 🏆</h2>";
+            let totalScore = 0;
+            
+            playerScores.forEach((data) => {
+                finalHTML += `<p>Disaster: **${data.disaster.toUpperCase()}** - Score: **${data.score}** points</p>`;
+                totalScore += data.score;
+            });
+
+            finalHTML += `<hr><h3>TOTAL CUMULATIVE SCORE: ${totalScore} points</h3>`;
+            message.textContent = "All scenarios complete! Total Score:";
+            scoreDisplay.innerHTML = finalHTML;
+            
+            nextButton.textContent = "Restart Game";
+            nextButton.onclick = () => window.location.reload();
+        }
+
+        function resetEquipment() {
+            const equipmentArea = document.getElementById('equipment-area');
+            const allEquipment = document.querySelectorAll('.equipment-item');
+            
+            // Move items from the box back to the equipment area
+            const equipmentInBox = medicalBox.querySelectorAll('.equipment-item');
+            equipmentInBox.forEach(item => {
+                equipmentArea.appendChild(item);
+            });
+
+            // Reset classes and draggable state for ALL equipment
+            allEquipment.forEach(item => {
+                item.classList.remove('correct', 'dropped', 'essential-correct', 'irrelevant-incorrect', 'wrong-scenario-incorrect', 'incorrect');
+                item.draggable = true;
+                // Visually move them back to their original area (if any were dragged)
+                equipmentArea.appendChild(item); 
+            });
+
+            medicalBox.innerHTML = 'Medical Box (First Aid Kit)<p>Drop essential items here</p>';
+
+            nextButton.style.display = 'none';
+            nextButton.onclick = nextPlayer;
+        }
+
+        // Initial setup
+        resetEquipment();
+        scoreDisplay.innerHTML = '';
+        // Set the very first scenario prompt
+        scenarioText.textContent = disasters[currentPlayerIndex].name;
+        message.textContent = `Scenario ${currentPlayerIndex + 1}. Drag items for: ${disasters[currentPlayerIndex].type.toUpperCase()}!`;
+    </script>
+</body>
+</html>

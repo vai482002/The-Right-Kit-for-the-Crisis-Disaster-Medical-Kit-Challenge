@@ -1,0 +1,285 @@
+/* style.css - CORRECTED FOR EQUIPMENT VISUALS */
+
+:root {
+    --color-primary: #3f51b5; /* Indigo Blue */
+    --color-secondary: #ff9800; /* Orange */
+    --color-background: #f4f4f9; /* Light Gray Background */
+    --color-dropzone: #e0f2f1; /* Light Teal */
+    --color-correct: #4caf50; /* Green */
+    --color-incorrect: #f44336; /* Red */
+    --color-general: #9e9e9e; /* Gray for General Items */
+    --color-text-dark: #333;
+    --color-text-light: #fff;
+}
+
+* {
+    box-sizing: border-box; /* Ensures padding and border are included in element's total width and height */
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-text-dark);
+    padding: 20px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+h1 {
+    color: var(--color-primary);
+    margin-bottom: 15px;
+    font-size: 2.5em;
+}
+
+h2 {
+    color: var(--color-primary);
+    font-size: 1.8em;
+    margin-bottom: 10px;
+}
+
+#disaster-prompt {
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+}
+
+#scenario-text {
+    color: var(--color-secondary);
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+#disaster-prompt p {
+    font-size: 1.1em;
+    color: #555;
+    margin-top: 10px;
+}
+
+/* --- Game Container Layout (Main areas side-by-side or stacked) --- */
+#game-container {
+    display: flex;
+    flex-direction: column; /* Default to column for small screens */
+    align-items: center;
+    max-width: 1200px; /* Max width for the entire game area */
+    margin: 30px auto;
+    gap: 30px; /* Space between medical box and equipment area */
+}
+
+/* --- Medical Box (The Drop Target) --- */
+#medical-box {
+    width: 90%; /* Take up most width on smaller screens */
+    max-width: 600px; /* Max width for the box */
+    min-height: 250px; /* Ensure it's tall enough to see */
+    background-color: var(--color-dropzone);
+    border: 3px dashed var(--color-primary);
+    border-radius: 15px;
+    padding: 20px;
+    display: flex;
+    flex-wrap: wrap; /* Allows dropped items to flow within the box */
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--color-primary);
+    transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+#medical-box p {
+    font-size: 0.8em;
+    color: #00796b;
+    width: 100%; /* Ensures text is centered below "Medical Box" */
+    text-align: center;
+    margin-top: 5px;
+}
+
+#medical-box.hover {
+    background-color: #c8e6c9; /* Light Green when an item is dragged over */
+    border-color: var(--color-correct);
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.5); /* Glowing effect */
+}
+
+
+/* --- Equipment Area (Where the items start) --- */
+#equipment-area {
+    /* CRITICAL FOR VISIBILITY: Flexbox to make items flow horizontally */
+    display: flex; 
+    flex-wrap: wrap; /* Allows items to wrap to the next line */
+    
+    justify-content: center; /* Centers the items horizontally */
+    align-items: flex-start; /* Align items to the top if multiple rows */
+    width: 95%; /* Take up most width */
+    max-width: 1000px; /* Max width for the equipment grid */
+    padding: 25px;
+    gap: 20px; /* Space between equipment items */
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* --- Individual Equipment Items --- */
+.equipment-item {
+    /* CRITICAL FOR VISIBILITY: Set explicit dimensions */
+    width: 120px; 
+    height: 140px; 
+    
+    padding: 10px;
+    background-color: #f0f0f0; /* Light gray background for items */
+    border: 2px solid var(--color-general); /* Neutral border */
+    border-radius: 10px;
+    text-align: center;
+    cursor: grab; /* Indicate draggable */
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+    user-select: none; /* Prevent text selection during drag */
+    
+    /* CRITICAL FOR VISIBILITY: Arrange image and text vertically */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around; /* Distribute space vertically */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.equipment-item:hover {
+    transform: translateY(-5px) scale(1.03); /* Lift and slightly enlarge on hover */
+    box-shadow: 0 8px 20px rgba(var(--color-primary), 0.2);
+    border-color: var(--color-primary);
+}
+
+.equipment-item img {
+    /* CRITICAL FOR VISIBILITY: Set explicit dimensions for images */
+    width: 70px; /* Larger image size */
+    height: 70px;
+    object-fit: contain; /* Ensures image fits without cropping or distortion */
+    margin-bottom: 8px; /* Space between image and text */
+    pointer-events: none; /* Allows dragging by parent div, not just the image */
+}
+
+.equipment-item span {
+    font-size: 0.9em; /* Slightly larger font for readability */
+    font-weight: bold;
+    color: var(--color-text-dark);
+    line-height: 1.2;
+    pointer-events: none; /* Allows dragging by parent div */
+}
+
+/* --- Visual Feedback for Dropped Items --- */
+
+.equipment-item.dropped {
+    cursor: default;
+    border-style: solid; /* Make border solid when dropped */
+    margin: 10px; /* Add some margin inside the medical box */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Subtle shadow for dropped items */
+}
+
+/* Correctly placed items */
+.equipment-item.correct {
+    background-color: #e8f5e9; /* Very light green */
+    border-color: var(--color-correct); /* Green border */
+}
+
+/* Incorrectly placed items */
+.equipment-item.incorrect {
+    background-color: #ffebee; /* Very light red */
+    border-color: var(--color-incorrect); /* Red border */
+}
+
+/* Item currently being dragged */
+.equipment-item.dragging {
+    opacity: 0.6; /* Semi-transparent when dragging */
+    transform: scale(1.05);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4);
+    z-index: 1000; /* Ensure dragged item stays on top */
+}
+
+/* --- Message and Score Display --- */
+
+#message {
+    margin-top: 25px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--color-primary);
+}
+
+#score-display {
+    font-size: 1.3em;
+    margin-top: 25px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    border: 2px solid var(--color-primary);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#score-display p {
+    margin: 8px 0;
+    color: var(--color-text-dark);
+}
+
+#score-display p b {
+    color: var(--color-secondary);
+}
+
+/* --- Button Styles --- */
+
+#next-button {
+    padding: 12px 25px;
+    margin-top: 30px;
+    font-size: 1.3em;
+    background-color: var(--color-secondary);
+    color: var(--color-text-light);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+#next-button:hover {
+    background-color: #e65100; /* Darker Orange */
+    transform: translateY(-2px);
+}
+
+#next-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Animation for Incorrect Drops --- */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+}
+
+.equipment-item.incorrect {
+    animation: shake 0.5s ease-in-out;
+}
+
+/* --- Responsive Design (Optional, but good practice) --- */
+@media (min-width: 768px) {
+    #game-container {
+        flex-direction: row; /* Side-by-side on larger screens */
+        justify-content: space-around;
+        align-items: flex-start; /* Align to the top */
+    }
+
+    #medical-box {
+        width: 40%;
+        min-height: 400px; /* Taller on larger screens */
+        margin-bottom: 0; /* No bottom margin when side-by-side */
+    }
+
+    #equipment-area {
+        width: 55%;
+        min-height: 400px; /* Match height of medical box */
+    }
+}
